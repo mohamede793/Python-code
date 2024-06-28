@@ -14,6 +14,6 @@ def read_root():
 
 @app.post("/fade-in-video")
 def read_item(input_video_path: str, fade_duration: float):
-    # output_file = fade_in_video(input_video_path, "bakwas", fade_duration)
+    output_file = fade_in_video(input_video_path, "bakwas", fade_duration)
     # Upload to S3 and return URL.
-    return {"video": "HELLLOO this is the EC2"}
+    return {"video": output_file}
