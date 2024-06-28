@@ -19,7 +19,7 @@ class FadeInBody(BaseModel):
     fade_duration: float
 
 @app.post("/fade-in-video")
-def read_item(FadeInBody):
+def read_item(body: FadeInBody):
     # output_file = fade_in_video(input_video_path, "bakwas", fade_duration)
     # Upload to S3 and return URL.
     return {"video": "THIS IS THE EC@ TALKING"}
