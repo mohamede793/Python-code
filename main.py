@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Dict, Any
 
-# from .fade_in_video import fade_in_video
+from .resize_video import resize_video
 
 app = FastAPI()
 
@@ -22,8 +22,7 @@ def read_item(body: Variables):
     # Upload to S3 and return URL.
     return {"video": "THIS IS THE EC@ TALKING"}
 
-@app.post("/compress")
+@app.post("/resize_video")
 def read_item(body: Variables):
-    # output_file = fade_in_video(input_video_path, "bakwas", fade_duration)
-    # Upload to S3 and return URL.
-    return {"video": "THIS IS THE COMPRESS FUNCTION"}
+    output_file = resize_video(body)
+    return {"video_link": output_file}
