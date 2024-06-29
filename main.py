@@ -12,8 +12,6 @@ app = FastAPI()
 def read_root():
     return {"Hello": "World"}
 
-
-
 class FadeInBody(BaseModel):
     input_video_path: str
     fade_duration: float
@@ -23,3 +21,9 @@ def read_item(body: FadeInBody):
     # output_file = fade_in_video(input_video_path, "bakwas", fade_duration)
     # Upload to S3 and return URL.
     return {"video": "THIS IS THE EC@ TALKING"}
+
+@app.post("/compress")
+def read_item(body: FadeInBody):
+    # output_file = fade_in_video(input_video_path, "bakwas", fade_duration)
+    # Upload to S3 and return URL.
+    return {"video": "THIS IS THE COMPRESS FUNCTION"}
