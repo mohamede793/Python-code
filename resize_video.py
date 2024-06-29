@@ -2,5 +2,5 @@ import os
 import subprocess
 
 def resize_video(body):
-   return body + "hello"
+   return  "this is resize_video"
 
