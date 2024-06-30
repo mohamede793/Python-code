@@ -29,7 +29,7 @@ def resize_video_handler(input_path, output_path, width, height):
 
 def resize_video(variables):
     bucket_name = "sora-prod-storage"
-    object_key = variables['object_name']
+    object_key = "medias/" + variables['object_name']
     aspect_ratio = variables['aspect_ratio']
     resized_suffix = "_resized"
     
