@@ -29,16 +29,14 @@ def trim_video_handler(input_path, output_path, max_duration=15):
         command = [
             'ffmpeg', '-i', input_path, '-ss', '00:00:00', '-t', '00:00:15', '-c:v', 'copy', '-c:a', 'copy', output_path
         ]
-
         ffmpeg_command = [
-            'ffmpeg', '-i', input_path, '-t', str(max_duration),
-            '-c:v', 'libx264', '-c:a', 'aac', '-strict', 'experimental', '-b:a', '192k', output_path
+            'ffmpeg', '-ss', '00:00:00', '-i', input_path, '-t', '00:00:15',
+            '-c:v', 'copy', '-c:a', 'copy', output_path
         ]
-
 
         print("before run")
 
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(ffmpeg_command, capture_output=True, text=True)
 
         print("finished")
         print(result)
