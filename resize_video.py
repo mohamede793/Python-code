@@ -37,7 +37,7 @@ def resize_video(body):
     
     # Temporary file paths
     input_path = f"/tmp/{uuid.uuid4()}_{file_name}"
-    output_path = f"/tmp/{uuid.uuid4()}_{resized_suffix}_{file_name}"
+    output_path = f"/tmp/{uuid.uuid4()}_{resized_suffix}_{os.path.splitext(file_name)[0]}.mp4"
     
     try:
         # Download the video from S3
@@ -55,7 +55,7 @@ def resize_video(body):
             }
         
         # Upload the resized video back to S3
-        resized_object_key = f"{os.path.splitext(object_key)[0]}{resized_suffix}{os.path.splitext(object_key)[1]}"
+        resized_object_key = f"{os.path.splitext(object_key)[0]}{resized_suffix}.mp4"
         logging.info(f"Uploading resized video to {resized_object_key} in bucket {bucket_name}")
         s3_client.upload_file(output_path, bucket_name, resized_object_key)
         
