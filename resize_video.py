@@ -28,12 +28,12 @@ def resize_video_handler(input_path, output_path, width, height):
         return False
 
 def resize_video(body):
-    bucket_name = "sora-prod-storage"
-    object_key = body.variables.object_name
-    aspect_ratio = body.variables.aspect_ratio
-    resized_suffix = "_resized"
+    # bucket_name = "sora-prod-storage"
+    # object_key = body.variables.object_name
+    # aspect_ratio = body.variables.aspect_ratio
+    # resized_suffix = "_resized"
 
-    # return body
+    return body.variables
     
     # Extract the file name from the S3 object key
     file_name = os.path.basename(object_key)
