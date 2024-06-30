@@ -27,7 +27,7 @@ def trim_video_handler(input_path, output_path, max_duration=15):
 
         # Trim the video if it's longer than max_duration
         command = [
-            'ffmpeg', '-i', 'input.mp4', '-ss', '00:00:00', '-t', '00:00:15', '-c:v', 'copy', '-c:a', 'copy', 'output.mp4'
+            'ffmpeg', '-i', input_path, '-ss', '00:00:00', '-t', '00:00:15', '-c:v', 'copy', '-c:a', 'copy', 'output.mp4'
         ]
 
         ffmpeg_command = [
