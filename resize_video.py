@@ -5,7 +5,7 @@ import uuid
 
 s3_client = boto3.client('s3')
 
-def handler(input_path, output_path, width, height):
+def resize_video_handler(input_path, output_path, width, height):
     try:
         ffmpeg_command = [
             '/opt/ffmpeg', '-i', input_path, '-vf', f'scale={width}:{height}',
@@ -34,7 +34,7 @@ def resize_video(body):
         
         # Resize the video
         width, height = 220, 140
-        if not resize_video(input_path, output_path, width, height):
+        if not resize_video_handler(input_path, output_path, width, height):
             return {
                 'statusCode': 500,
                 'body': f"Error resizing video {object_name}"
