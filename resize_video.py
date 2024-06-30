@@ -2,6 +2,11 @@ import boto3
 import os
 import subprocess
 import uuid
+import logging
+
+# Configure logging
+logging.basicConfig(filename='/tmp/resize_video.log', level=logging.INFO, 
+                    format='%(asctime)s:%(levelname)s:%(message)s')
 
 s3_client = boto3.client('s3')
 
@@ -13,13 +18,13 @@ def resize_video_handler(input_path, output_path, width, height):
         ]
         result = subprocess.run(ffmpeg_command, capture_output=True, text=True)
         if result.returncode != 0:
-            print(result.stderr)
+            logging.error(f"FFmpeg error: {result.stderr}")
             return False
         else:
-            print(result.stdout)
+            logging.info(f"FFmpeg output: {result.stdout}")
             return True
     except Exception as e:
-        print(str(e))
+        logging.error(f"Exception in resize_video_handler: {str(e)}")
         return False
 
 def resize_video(body):
@@ -36,11 +41,14 @@ def resize_video(body):
     
     try:
         # Download the video from S3
+        logging.info(f"Downloading {object_key} from bucket {bucket_name} to {input_path}")
         s3_client.download_file(bucket_name, object_key, input_path)
         
         # Resize the video
         width, height = 220, 140
+        logging.info(f"Resizing video from {input_path} to {output_path} with width {width} and height {height}")
         if not resize_video_handler(input_path, output_path, width, height):
+            logging.error(f"Error resizing video {object_key}")
             return {
                 'statusCode': 500,
                 'body': f"Error resizing video {object_key}"
@@ -48,6 +56,7 @@ def resize_video(body):
         
         # Upload the resized video back to S3
         resized_object_key = f"{os.path.splitext(object_key)[0]}{resized_suffix}{os.path.splitext(object_key)[1]}"
+        logging.info(f"Uploading resized video to {resized_object_key} in bucket {bucket_name}")
         s3_client.upload_file(output_path, bucket_name, resized_object_key)
         
         return {
@@ -56,7 +65,7 @@ def resize_video(body):
         }
     
     except Exception as e:
-        print(str(e))
+        logging.error(f"Exception in resize_video: {str(e)}")
         return {
             'statusCode': 500,
             'body': f"An error occurred: {str(e)}"
@@ -67,3 +76,6 @@ def resize_video(body):
         if os.path.exists(output_path):
             os.remove(output_path)
 
+# Example usage:
+# body = {"some_key": "some_value"}  # Replace with actual body content if needed
+# print(resize_video(body))
