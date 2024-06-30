@@ -21,6 +21,8 @@ def trim_video_handler(input_path, output_path, max_duration=15):
         result = subprocess.run(ffprobe_command, capture_output=True, text=True)
         duration = float(result.stdout.strip())
 
+        logging.info(f"Video duration: {duration}")
+
         # Trim the video if it's longer than max_duration
         if duration > max_duration:
             ffmpeg_command = [
@@ -29,7 +31,9 @@ def trim_video_handler(input_path, output_path, max_duration=15):
             ]
         else:
             # Just copy the original video if it's within the duration limit
-            ffmpeg_command = ['ffmpeg', '-i', 'input_path','-c:v', 'copy', '-c:a', 'copy', output_path]
+            ffmpeg_command = [
+                'ffmpeg', '-i', input_path, '-c:v', 'copy', '-c:a', 'copy', output_path
+            ]
 
         result = subprocess.run(ffmpeg_command, capture_output=True, text=True)
         if result.returncode != 0:
@@ -47,7 +51,7 @@ def trim_video(variables):
     object_key = 'medias/' + variables['object_name']
     trimmed_suffix = "_trimmed"
 
-    print("in trimmer")
+    logging.info("in trimmer")
     
     # Extract the file name from the S3 object key
     file_name = os.path.basename(object_key)
