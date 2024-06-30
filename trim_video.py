@@ -46,6 +46,8 @@ def trim_video(variables):
     bucket_name = "sora-prod-storage"
     object_key = 'medias/' + variables['object_name']
     trimmed_suffix = "_trimmed"
+
+    print("in trimmer")
     
     # Extract the file name from the S3 object key
     file_name = os.path.basename(object_key)
