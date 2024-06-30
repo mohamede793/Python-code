@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from typing import Dict, Any
 
 from resize_video import resize_video
+from trim_video import trim_video
+
 
 app = FastAPI()
 
@@ -25,4 +27,9 @@ def read_item(body: Variables):
 @app.post("/resize_video")
 def read_item(body: Variables):
     output_file = resize_video(body.variables)
+    return output_file
+
+@app.post("/trim_video")
+def read_item(body: Variables):
+    output_file = trim_video(body.variables)
     return output_file
