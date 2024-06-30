@@ -27,16 +27,16 @@ def resize_video_handler(input_path, output_path, width, height):
         logging.error(f"Exception in resize_video_handler: {str(e)}")
         return False
 
-def resize_video(body):
+def resize_video(variables):
     # bucket_name = "sora-prod-storage"
     # object_key = body.variables.object_name
     # aspect_ratio = body.variables.aspect_ratio
     # resized_suffix = "_resized"
 
     print("hello")
-    print(type(body.variables))
+    print(type(variables))
 
-    return body.variables
+    return variables['object_name']
     
     # Extract the file name from the S3 object key
     file_name = os.path.basename(object_key)
