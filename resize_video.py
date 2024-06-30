@@ -29,13 +29,10 @@ def resize_video_handler(input_path, output_path, width, height):
 
 def resize_video(variables):
     bucket_name = "sora-prod-storage"
-    object_key = "medias/" + variables['object_name']
+    object_key = 'medias/' + variables['object_name']
     aspect_ratio = variables['aspect_ratio']
     resized_suffix = "_resized"
-
-    print(object_key)
-    print(aspect_ratio)
-
+    
     # Extract the file name from the S3 object key
     file_name = os.path.basename(object_key)
     
@@ -44,14 +41,26 @@ def resize_video(variables):
     output_path = f"/tmp/{uuid.uuid4()}_{resized_suffix}_{os.path.splitext(file_name)[0]}.mp4"
     
     try:
+        # Check if the object exists in S3
+        logging.info(f"Checking existence of {object_key} in bucket {bucket_name}")
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=object_key)
+        except Exception as e:
+            logging.error(f"Object {object_key} not found in bucket {bucket_name}: {str(e)}")
+            return {
+                'statusCode': 404,
+                'body': f"Object {object_key} not found in bucket {bucket_name}"
+            }
+        
         # Download the video from S3
         logging.info(f"Downloading {object_key} from bucket {bucket_name} to {input_path}")
         s3_client.download_file(bucket_name, object_key, input_path)
         
+        # Determine width and height based on aspect ratio
         if aspect_ratio == "16:9":
             width, height = 220, 140
         elif aspect_ratio == "9:16":
-            height, width = 220, 140
+            width, height = 140, 220  # Corrected to match 9:16 aspect ratio
         else:
             width, height = 220, 220
 
@@ -86,5 +95,5 @@ def resize_video(variables):
             os.remove(output_path)
 
 # Example usage:
-# body = {"some_key": "some_value"}  # Replace with actual body content if needed
-# print(resize_video(body))
+# body = {"variables": {"object_name": "example_object.mp4", "aspect_ratio": "16:9"}}  # Replace with actual body content if needed
+# print(resize_video(body['variables']))
