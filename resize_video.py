@@ -33,7 +33,8 @@ def resize_video(body):
     # aspect_ratio = body.variables.aspect_ratio
     # resized_suffix = "_resized"
 
-    print("HEYYYY" + type(body.variables))
+    print("hello")
+    print(type(body.variables))
 
     return body.variables
     
