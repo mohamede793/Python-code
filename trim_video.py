@@ -35,6 +35,8 @@ def trim_video_handler(input_path, output_path, max_duration=15):
                 'ffmpeg', '-i', input_path, '-c:v', 'copy', '-c:a', 'copy', output_path
             ]
 
+        print("finished trimming")
+
         result = subprocess.run(ffmpeg_command, capture_output=True, text=True)
         if result.returncode != 0:
             logging.error(f"FFmpeg error: {result.stderr}")
@@ -51,11 +53,12 @@ def trim_video(variables):
     object_key = 'medias/' + variables['object_name']
     trimmed_suffix = "_trimmed"
 
-    logging.info("in trimmer")
+    print("in trimmer")
     
     # Extract the file name from the S3 object key
     file_name = os.path.basename(object_key)
     
+    print(file_name)
     # Temporary file paths
     input_path = f"/tmp/{uuid.uuid4()}_{file_name}"
     output_path = f"/tmp/{uuid.uuid4()}_{trimmed_suffix}_{os.path.splitext(file_name)[0]}.mp4"
@@ -63,6 +66,7 @@ def trim_video(variables):
     try:
         # Check if the object exists in S3
         logging.info(f"Checking existence of {object_key} in bucket {bucket_name}")
+        print(f"Checking existence of {object_key} in bucket {bucket_name}")
         max_retries = 10
         retries = 0
         while retries < max_retries:
@@ -79,10 +83,13 @@ def trim_video(variables):
                 'statusCode': 404,
                 'body': f"Object {object_key} not found in bucket {bucket_name}"
             }
+        print("done that")
         
         # Download the video from S3
         logging.info(f"Downloading {object_key} from bucket {bucket_name} to {input_path}")
         s3_client.download_file(bucket_name, object_key, input_path)
+
+        print("downloaded")
         
         logging.info(f"Trimming video from {input_path} to {output_path} to max 15 seconds")
         if not trim_video_handler(input_path, output_path):
