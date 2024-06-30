@@ -32,6 +32,8 @@ def resize_video(body):
     object_key = body.object_name
     aspect_ratio = body.aspect_ratio
     resized_suffix = "_resized"
+
+    return body.object_name + "  :  " + body.aspect_ratio
     
     # Extract the file name from the S3 object key
     file_name = os.path.basename(object_key)
