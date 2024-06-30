@@ -29,7 +29,8 @@ def resize_video_handler(input_path, output_path, width, height):
 
 def resize_video(body):
     bucket_name = "sora-prod-storage"
-    object_key = "medias/0f2d79ab-33a3-4488-ba8d-788377c8804a"
+    object_key = body.object_name
+    aspect_ratio = body.aspect_ratio
     resized_suffix = "_resized"
     
     # Extract the file name from the S3 object key
@@ -44,8 +45,13 @@ def resize_video(body):
         logging.info(f"Downloading {object_key} from bucket {bucket_name} to {input_path}")
         s3_client.download_file(bucket_name, object_key, input_path)
         
-        # Resize the video
-        width, height = 220, 140
+        if aspect_ratio == "horizontal":
+            width, height = 220, 140
+        elif aspect_ratio == "vertical":
+            height, width = 220, 140
+        else:
+            width, height = 220, 220
+            
         logging.info(f"Resizing video from {input_path} to {output_path} with width {width} and height {height}")
         if not resize_video_handler(input_path, output_path, width, height):
             logging.error(f"Error resizing video {object_key}")
