@@ -1,12 +1,3 @@
-import os
-import subprocess
-
-def resize_video(body):
-   
-   return "THIS IS RESIZE VIDEO"
-
-
-
 import boto3
 import os
 import subprocess
