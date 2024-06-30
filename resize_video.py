@@ -3,6 +3,8 @@ import os
 import subprocess
 import uuid
 import logging
+import time
+
 
 # Configure logging
 logging.basicConfig(filename='/tmp/resize_video.log', level=logging.INFO, 
@@ -43,10 +45,18 @@ def resize_video(variables):
     try:
         # Check if the object exists in S3
         logging.info(f"Checking existence of {object_key} in bucket {bucket_name}")
-        try:
-            s3_client.head_object(Bucket=bucket_name, Key=object_key)
-        except Exception as e:
-            logging.error(f"Object {object_key} not found in bucket {bucket_name}: {str(e)}")
+        max_retries = 10
+        retries = 0
+        while retries < max_retries:
+            try:
+                s3_client.head_object(Bucket=bucket_name, Key=object_key)
+                break
+            except Exception as e:
+                retries += 1
+                logging.warning(f"Attempt {retries} - Object {object_key} not found in bucket {bucket_name}: {str(e)}")
+                time.sleep(1)
+        else:
+            logging.error(f"Object {object_key} not found in bucket {bucket_name} after {max_retries} retries")
             return {
                 'statusCode': 404,
                 'body': f"Object {object_key} not found in bucket {bucket_name}"
