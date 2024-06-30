@@ -45,13 +45,13 @@ def resize_video(body):
         logging.info(f"Downloading {object_key} from bucket {bucket_name} to {input_path}")
         s3_client.download_file(bucket_name, object_key, input_path)
         
-        if aspect_ratio == "horizontal":
+        if aspect_ratio == "16:9":
             width, height = 220, 140
-        elif aspect_ratio == "vertical":
+        elif aspect_ratio == "9:16":
             height, width = 220, 140
         else:
             width, height = 220, 220
-            
+
         logging.info(f"Resizing video from {input_path} to {output_path} with width {width} and height {height}")
         if not resize_video_handler(input_path, output_path, width, height):
             logging.error(f"Error resizing video {object_key}")
