@@ -35,9 +35,11 @@ def trim_video_handler(input_path, output_path, max_duration=15):
                 'ffmpeg', '-i', input_path, '-c:v', 'copy', '-c:a', 'copy', output_path
             ]
 
-        print("finished trimming")
 
         result = subprocess.run(ffmpeg_command, capture_output=True, text=True)
+        print("finished trimming")
+        print(result)
+
         if result.returncode != 0:
             logging.error(f"FFmpeg error: {result.stderr}")
             return False
