@@ -31,5 +31,5 @@ def read_item(body: Variables):
 
 @app.post("/trim_video")
 def read_item(body: Variables):
-    output_file = trim_video(body.variables)
-    return output_file
+    # output_file = trim_video(body.variables)
+    return "THIS IS THE EC2 TALKING ABOUT TRIM" #output_file
