@@ -105,11 +105,12 @@ def trim_video(variables):
         trimmed_object_key = f"{os.path.splitext(object_key)[0]}{trimmed_suffix}.mp4"
         logging.info(f"Uploading trimmed video to {trimmed_object_key} in bucket {bucket_name}")
         s3_client.upload_file(output_path, bucket_name, trimmed_object_key)
-        
+        presigned_url = generate_presigned_url(bucket_name, trimmed_object_key)
+
         return {
             'statusCode': 200,
             'body': f"Trimmed video saved as {trimmed_object_key} in bucket {bucket_name}",
-            'object_key': trimmed_object_key
+            'object_key': presigned_url
         }
     
     except Exception as e:
@@ -124,6 +125,14 @@ def trim_video(variables):
         if os.path.exists(output_path):
             os.remove(output_path)
 
-# Example usage:
-# body = {"variables": {"object_name": "example_object.mp4"}}  # Replace with actual body content if needed
-# print(trim_video(body['variables']))
+def generate_presigned_url(bucket_name, object_key, expiration=3600):
+    try:
+        response = s3_client.generate_presigned_url('get_object',
+                                                    Params={'Bucket': bucket_name,
+                                                            'Key': object_key},
+                                                    ExpiresIn=expiration)
+    except Exception as e:
+        logging.error(f"Error generating presigned URL: {str(e)}")
+        return None
+
+    return response
