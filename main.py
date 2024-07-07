@@ -18,11 +18,20 @@ def read_root():
 class Variables(BaseModel):
     variables: Dict[str, Any]
 
+@app.post("/fade-in-video")
+def read_item(body: Variables):
+    # output_file = fade_in_video(body.variables)
+    return "THIS IS THE fade in video"
+
+@app.post("/resize_video")
+def read_item(body: Variables):
+    # output_file = resize_video(body.variables)
+    return "THIS IS THE resize video" #output_file
+
 @app.post("/trim_video")
 def read_item(body: Variables):
-    return "HELLLOOO"
-    output = trim_video(body.variables)
-    return output
+    # output_file = trim_video(body.variables)
+    return "THIS IS THE trim video" #output_file
 
 # @app.post("/add_video")
 # def read_item(body: Variables):
