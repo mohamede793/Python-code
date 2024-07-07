@@ -20,6 +20,7 @@ class Variables(BaseModel):
 
 @app.post("/trim_video")
 def trim_video_endpoint(body: Variables):
+    return "HELLLOOO"
     output = trim_video(body.variables)
     return output
 
