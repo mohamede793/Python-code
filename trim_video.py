@@ -26,9 +26,6 @@ def trim_video_handler(input_path, output_path, max_duration=15):
         logging.info(f"Video duration: {duration}")
 
         # Trim the video if it's longer than max_duration
-        command = [
-            'ffmpeg', '-i', input_path, '-ss', '00:00:00', '-t', '00:00:15', '-c:v', 'copy', '-c:a', 'copy', output_path
-        ]
         ffmpeg_command = [
             'ffmpeg', '-ss', '00:00:00', '-i', input_path, '-t', '00:00:15',
             '-c:v', 'copy', '-c:a', 'copy', output_path
@@ -109,7 +106,8 @@ def trim_video(variables):
         
         return {
             'statusCode': 200,
-            'body': f"Trimmed video saved as {trimmed_object_key} in bucket {bucket_name}"
+            'body': f"Trimmed video saved as {trimmed_object_key} in bucket {bucket_name}",
+            'object_key': trimmed_object_key
         }
     
     except Exception as e:
