@@ -11,7 +11,7 @@ logging.basicConfig(filename='/tmp/trim_video.log', level=logging.INFO,
 
 s3_client = boto3.client('s3')
 
-def trim_video_handler(input_path, output_path, max_duration=15):
+def trim_video_handler(input_path, output_path, start_time, end_time, max_duration=15):
     try:
         # Get the video duration
         ffprobe_command = [
@@ -27,7 +27,7 @@ def trim_video_handler(input_path, output_path, max_duration=15):
 
         # Trim the video if it's longer than max_duration
         ffmpeg_command = [
-            'ffmpeg', '-ss', '00:00:00', '-i', input_path, '-t', '00:00:15',
+            'ffmpeg', '-ss', start_time, '-i', input_path, '-t', end_time,
             '-c:v', 'copy', '-c:a', 'copy', output_path
         ]
 
@@ -52,6 +52,8 @@ def trim_video(variables):
     bucket_name = "sora-prod-storage"
     object_key = 'medias/' + variables['object_name']
     trimmed_suffix = "_trimmed"
+    start_time = variables['start_time']
+    end_time = variables['end_time']
 
     print(object_key)
 
@@ -94,7 +96,7 @@ def trim_video(variables):
         print("downloaded")
         
         logging.info(f"Trimming video from {input_path} to {output_path} to max 15 seconds")
-        if not trim_video_handler(input_path, output_path):
+        if not trim_video_handler(input_path, output_path, start_time, end_time):
             logging.error(f"Error trimming video {object_key}")
             return {
                 'statusCode': 500,
