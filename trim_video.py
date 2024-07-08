@@ -4,12 +4,20 @@ import subprocess
 import uuid
 import logging
 import time
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(filename='/tmp/trim_video.log', level=logging.INFO, 
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
 s3_client = boto3.client('s3')
+
+
+def calculate_duration(start_time, end_time):
+    fmt = '%H:%M:%S'
+    tdelta = datetime.strptime(end_time, fmt) - datetime.strptime(start_time, fmt)
+    return str(tdelta)
+
 
 def trim_video_handler(input_path, output_path, start_time, end_time, max_duration=15):
     try:
@@ -25,9 +33,11 @@ def trim_video_handler(input_path, output_path, start_time, end_time, max_durati
 
         logging.info(f"Video duration: {duration}")
 
+        trim_duration = calculate_duration(start_time, end_time)
+
         # Trim the video if it's longer than max_duration
         ffmpeg_command = [
-            'ffmpeg', '-ss', start_time, '-i', input_path, '-t', end_time,
+            'ffmpeg', '-ss', start_time, '-i', input_path, '-t', trim_duration,
             '-c:v', 'copy', '-c:a', 'copy', output_path
         ]
 
