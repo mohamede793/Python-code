@@ -20,7 +20,7 @@ def delete_object_from_s3(bucket_name, object_key):
 
 def delete_object(variables):
     bucket_name = "sora-prod-storage"
-    object_key = 'medias/' + variables['object_name']
+    object_key = variables['object_name']
     
     print(object_key)
     try:

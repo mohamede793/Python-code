@@ -60,7 +60,7 @@ def trim_video_handler(input_path, output_path, start_time, end_time, max_durati
 
 def trim_video(variables):
     bucket_name = "sora-prod-storage"
-    object_key = 'medias/' + variables['object_name']
+    object_key = variables['object_name']
     trimmed_suffix = "_trimmed"
     start_time = variables['start_time']
     end_time = variables['end_time']

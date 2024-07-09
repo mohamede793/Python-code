@@ -23,7 +23,7 @@ def generate_presigned_url(bucket_name, object_key, expiration=3600):
 
 def get_object_url(variables):
     bucket_name = "sora-prod-storage"
-    object_key = 'medias/' + variables['object_name']
+    object_key = variables['object_name']
     
     print(object_key)
     try:
