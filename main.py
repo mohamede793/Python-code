@@ -6,6 +6,7 @@ from typing import Dict, Any
 
 from resize_video import resize_video
 from trim_video import trim_video
+from get_object_url import get_object_url
 
 
 app = FastAPI()
@@ -21,6 +22,11 @@ class Variables(BaseModel):
 @app.post("/trim_video")
 def trim_video_endpoint(body: Variables):
     output_file = trim_video(body.variables)
+    return output_file
+
+@app.post("/get_object_url")
+def get_object_url_endpoint(body: Variables):
+    output_file = get_object_url(body.variables)
     return output_file
 
 @app.post("/add_video")
