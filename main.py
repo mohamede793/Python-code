@@ -7,6 +7,8 @@ from typing import Dict, Any
 from resize_video import resize_video
 from trim_video import trim_video
 from get_object_url import get_object_url
+from delete_object import delete_object
+
 
 
 app = FastAPI()
@@ -18,6 +20,11 @@ def read_root():
 
 class Variables(BaseModel):
     variables: Dict[str, Any]
+
+@app.post("/delete_object")
+def trim_video_endpoint(body: Variables):
+    output_file = delete_object(body.variables)
+    return output_file
 
 @app.post("/trim_video")
 def trim_video_endpoint(body: Variables):
