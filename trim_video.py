@@ -122,6 +122,7 @@ def trim_video(variables):
         return {
             'statusCode': 200,
             'body': f"Trimmed video saved as {trimmed_object_key} in bucket {bucket_name}",
+            'object_key': trimmed_object_key,
             'object_url': presigned_url
         }
     
