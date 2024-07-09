@@ -1,6 +1,7 @@
 import boto3
 import logging
 import os
+import time
 
 # Configure logging
 logging.basicConfig(filename='/tmp/resize_video.log', level=logging.INFO, 
@@ -22,7 +23,7 @@ def generate_presigned_url(bucket_name, object_key, expiration=3600):
 
 def get_object_url(variables):
     bucket_name = "sora-prod-storage"
-    object_key = 'medias/' + variables['object_name']
+    object_key = 'medias/' + '4f6afa9d-3924-4ae3-92a4-81f8c61837df'
     
     try:
         # Check if the object exists in S3
