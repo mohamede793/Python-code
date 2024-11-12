@@ -1,7 +1,7 @@
 from typing import List, Dict, Literal
 from moviepy.editor import (
     VideoFileClip, TextClip, CompositeVideoClip,
-    ColorClip, VideoClip
+    ColorClip, VideoClip, concatenate_videoclips
 )
 import whisper
 import os
@@ -64,7 +64,9 @@ class CaptionStyle:
         stroke_color: str = "black",
         stroke_width: int = 4,
         position: Literal["top", "center", "bottom"] = "bottom",
-        margin: int = 50
+        margin: int = 50,
+        active_color: str = "lime",
+        active_size_increase: int = 10
     ):
         self.font = font
         self.font_size = font_size
@@ -73,32 +75,71 @@ class CaptionStyle:
         self.stroke_width = stroke_width
         self.position = position
         self.margin = margin
+        self.active_color = active_color
+        self.active_size_increase = active_size_increase
+
+class Word:
+    def __init__(self, text: str, start: float, end: float):
+        self.text = text
+        self.start = start
+        self.end = end
 
 class CaptionGroup:
     def __init__(self, words: List[Dict], style: CaptionStyle):
-        self.words = words
-        self.text = " ".join(w["word"].strip() for w in words)
+        self.words = [Word(w["word"].strip(), w["start"], w["end"]) for w in words]
         self.start_time = words[0]["start"]
         self.end_time = words[-1]["end"]
         self.style = style
 
-    def create_clip(self) -> VideoClip:
-        """Create a text clip with the caption"""
-        try:
-            font_path = FONT_MANAGER.get_font_path(self.style.font)
-        except ValueError:
-            print(f"Warning: Font '{self.style.font}' not found, falling back to Arial")
-            font_path = "Arial"
+    def create_clip(self, video_size: tuple) -> VideoClip:
+        """Create a text clip with animated words"""
+        def make_frame(t):
+            word_clips = []
+            x_offset = 0
 
-        return TextClip(
-            txt=self.text,
-            fontsize=self.style.font_size,
-            font=font_path,
-            color=self.style.color,
-            stroke_color=self.style.stroke_color,
-            stroke_width=self.style.stroke_width,
-            method='caption'
-        )
+            for word in self.words:
+                # Determine if word is active
+                is_active = word.start <= t <= word.end
+
+                # Create text clip for word with appropriate styling
+                font_size = (self.style.font_size + self.style.active_size_increase
+                           if is_active else self.style.font_size)
+                color = self.style.active_color if is_active else self.style.color
+                font_weight = 'bold' if is_active else 'normal'
+
+                word_clip = TextClip(
+                    txt=word.text + " ",
+                    fontsize=font_size,
+                    font=FONT_MANAGER.get_font_path(self.style.font),
+                    color=color,
+                    stroke_color=self.style.stroke_color,
+                    stroke_width=self.style.stroke_width,
+                    method='caption'
+                )
+
+                # Position word clip
+                word_clip = word_clip.set_position((x_offset, 0))
+                word_clips.append(word_clip)
+                x_offset += word_clip.w
+
+            # Create background for the group
+            bg = ColorClip((video_size[0], max(clip.h for clip in word_clips)),
+                         color=(0,0,0,0))
+
+            # Compose all word clips
+            comp = CompositeVideoClip([bg] + word_clips)
+            return comp.get_frame(0)
+
+        duration = self.end_time - self.start_time
+        clip = VideoClip(make_frame, duration=duration)
+
+        # Position the entire caption group
+        x_pos = (video_size[0] - clip.w) // 2
+        y_pos = (video_size[1] - clip.h - self.style.margin
+                if self.style.position == "bottom"
+                else self.style.margin)
+
+        return clip.set_position((x_pos, y_pos))
 
 class VideoProcessor:
     def __init__(
@@ -127,19 +168,6 @@ class VideoProcessor:
         self.caption_style = caption_style or CaptionStyle()
         self.n_cores = max(cpu_count() - 1, 1)
 
-    def _get_caption_position(self, caption_height: int) -> tuple[int, int]:
-        """Calculate caption position based on style settings"""
-        x_pos = (self.video_size[0] - caption_height) // 2
-
-        if self.caption_style.position == "top":
-            y_pos = self.caption_style.margin
-        elif self.caption_style.position == "center":
-            y_pos = (self.video_size[1] - caption_height) // 2
-        else:  # bottom
-            y_pos = self.video_size[1] - caption_height - self.caption_style.margin
-
-        return x_pos, y_pos
-
     def process(self):
         """Main processing pipeline"""
         try:
@@ -149,12 +177,60 @@ class VideoProcessor:
                 print("No transcriptions were generated. Check if the video has audio.")
                 return
 
+            # Load the original video once
+            original_video = VideoFileClip(self.input_path)
+            if self.video_size != self.original_size:
+                original_video = original_video.resize(self.video_size)
+
+            # Create caption clips
             caption_groups = [
                 CaptionGroup(t["words"], self.caption_style)
                 for t in transcriptions
             ]
-            caption_video = self._create_caption_video(caption_groups)
-            self._create_final_video(caption_video)
+
+            # Create caption overlay clips with proper timing
+            caption_clips = []
+            for group in caption_groups:
+                clip = group.create_clip(self.video_size)
+                clip = clip.set_start(group.start_time).set_end(group.end_time)
+                caption_clips.append(clip)
+
+            # Combine original video with captions
+            final_video = CompositeVideoClip(
+                [original_video] + caption_clips,
+                size=self.video_size
+            )
+
+            # Write final video
+            print("\nRendering final video...")
+            with ProgressBar(desc="Rendering video") as progress:
+                final_video.write_videofile(
+                    self.output_path,
+                    codec='libx264',
+                    audio_codec='aac',
+                    temp_audiofile='temp_audio_final.m4a',
+                    remove_temp=True,
+                    fps=original_video.fps,
+                    threads=self.n_cores,
+                    preset='veryfast',
+                    ffmpeg_params=[
+                        '-crf', '20',
+                        '-tune', 'fastdecode',
+                        '-movflags', '+faststart',
+                        '-bf', '2',
+                        '-g', '30',
+                        '-profile:v', 'high',
+                        '-level', '4.1',
+                        '-bufsize', '20000k',
+                        '-maxrate', '25000k',
+                        '-pix_fmt', 'yuv420p'
+                    ],
+                    logger=progress,
+                    verbose=False
+                )
+
+            original_video.close()
+            final_video.close()
             print("\nProcessing complete! Output saved to:", self.output_path)
 
         except Exception as e:
@@ -229,76 +305,6 @@ class VideoProcessor:
 
         return transcriptions
 
-    def _create_caption_video(self, caption_groups: List[CaptionGroup]) -> VideoClip:
-        """Create transparent video with captions"""
-        print("\nCreating caption overlay...")
-
-        bg = ColorClip(self.video_size, color=(0,0,0,0)).set_duration(0.1)
-        bg_frame = bg.get_frame(0)
-
-        def make_frame(t):
-            current_group = None
-            for group in caption_groups:
-                if group.start_time <= t <= group.end_time:
-                    current_group = group
-                    break
-
-            if not current_group:
-                return bg_frame
-
-            caption = current_group.create_clip()
-            x_pos = (self.video_size[0] - caption.w) // 2
-            y_pos = self._get_caption_position(caption.h)[1]
-            caption = caption.set_position((x_pos, y_pos))
-
-            comp = CompositeVideoClip([bg, caption])
-            return comp.get_frame(0)
-
-        video = VideoFileClip(self.input_path)
-        duration = video.duration
-        video.close()
-
-        return VideoClip(make_frame, duration=duration)
-
-    def _create_final_video(self, caption_video: VideoClip):
-        """Overlay captions on original video"""
-        print("\nCreating final video...")
-        original_video = VideoFileClip(self.input_path)
-
-        if self.video_size != self.original_size:
-            original_video = original_video.resize(self.video_size)
-
-        final_video = CompositeVideoClip([original_video, caption_video])
-
-        with ProgressBar(desc="Rendering video") as progress:
-            final_video.write_videofile(
-                self.output_path,
-                codec='libx264',
-                audio_codec='aac',
-                temp_audiofile='temp_audio_final.m4a',
-                remove_temp=True,
-                fps=original_video.fps,
-                threads=self.n_cores,
-                preset='veryfast',
-                ffmpeg_params=[
-                    '-crf', '20',
-                    '-tune', 'fastdecode',
-                    '-movflags', '+faststart',
-                    '-bf', '2',
-                    '-g', '30',
-                    '-profile:v', 'high',
-                    '-level', '4.1',
-                    '-bufsize', '20000k',
-                    '-maxrate', '25000k',
-                    '-pix_fmt', 'yuv420p'
-                ],
-                logger=progress,
-                verbose=False
-            )
-
-        original_video.close()
-        final_video.close()
-
 if __name__ == "__main__":
     try:
         # Add custom font if available
@@ -309,7 +315,7 @@ if __name__ == "__main__":
             print("PermanentMarker font not found, using Arial instead.")
             font_name = "Arial"
 
-        # Create custom style
+        # Create custom style with active word highlighting
         custom_style = CaptionStyle(
             font=font_name,
             font_size=40,
@@ -317,7 +323,9 @@ if __name__ == "__main__":
             stroke_color="black",
             stroke_width=3,
             position="bottom",
-            margin=40
+            margin=40,
+            active_color="lime",  # Color for actively spoken words
+            active_size_increase=5  # Size increase for active words
         )
 
         # Process the video
